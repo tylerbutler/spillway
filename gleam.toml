@@ -1,0 +1,15 @@
+name = "spillway"
+version = "0.1.0"
+description = "Type-safe Fluid Framework protocol logic (sequencing, sessions, signals) — layered above dewdrop"
+licences = ["MIT"]
+repository = { type = "github", user = "tylerbutler", repo = "spillway" }
+gleam = ">= 1.7.0"
+target = "erlang"
+
+[dependencies]
+gleam_stdlib = ">= 0.62.0 and < 2.0.0"
+gleam_json = ">= 3.0.0 and < 4.0.0"
+dewdrop = { path = "../dewdrop" }
+
+[dev-dependencies]
+startest = ">= 0.8.0 and < 1.0.0"
