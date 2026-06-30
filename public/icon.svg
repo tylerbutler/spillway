@@ -1,14 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
   <title id="title">Spillway icon</title>
-  <desc id="desc">A circular mark with three controlled water channels passing through a spillway gate.</desc>
+  <desc id="desc">An engineered circular spillway mark with three gate piers controlling a bright channel through a deep cobalt basin.</desc>
   <style>
-    .bg { fill: oklch(0.54 0.122 248); }
-    .gate { fill: none; stroke: oklch(1 0 0); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
-    .flow { fill: none; stroke: oklch(0.86 0.08 190); stroke-width: 7; stroke-linecap: round; }
-    .deep { fill: none; stroke: oklch(0.26 0.095 252); stroke-width: 7; stroke-linecap: round; }
+    .basin { fill: oklch(0.31 0.105 252); }
+    .rim { fill: none; stroke: oklch(0.66 0.145 188); stroke-width: 5; }
+    .cut { fill: oklch(0.54 0.122 248); }
+    .water { fill: none; stroke: oklch(0.91 0.04 188); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
+    .gate { fill: none; stroke: oklch(1 0 0); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+    .node { fill: oklch(0.91 0.04 188); }
   </style>
-  <circle class="bg" cx="64" cy="64" r="58"/>
-  <path class="gate" d="M35 34h58M42 34v32c0 17 10 28 22 28s22-11 22-28V34"/>
-  <path class="flow" d="M30 68c11-8 20-8 31 0s20 8 31 0"/>
-  <path class="deep" d="M37 86c9-6 17-6 26 0s17 6 26 0"/>
+  <circle class="basin" cx="64" cy="64" r="58"/>
+  <circle class="rim" cx="64" cy="64" r="52"/>
+  <path class="cut" d="M22 82c13-10 23-12 35-6 14 7 25 6 49-14v36c-13 14-29 22-47 22-15 0-28-5-37-14Z"/>
+  <path class="water" d="M31 80c12-8 22-9 33-3 13 7 23 5 34-6"/>
+  <path class="water" d="M40 97c9-5 17-6 26-1 10 5 19 4 27-3" opacity="0.72"/>
+  <path class="gate" d="M35 33h58M42 33v33M64 33v43M86 33v28"/>
+  <path class="gate" d="M42 66c7 6 14 9 22 10s15-3 22-15" opacity="0.86"/>
+  <circle class="node" cx="42" cy="66" r="4"/>
+  <circle class="node" cx="64" cy="76" r="4"/>
+  <circle class="node" cx="86" cy="61" r="4"/>
 </svg>
