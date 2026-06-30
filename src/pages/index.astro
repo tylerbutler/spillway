@@ -1,15 +1,20 @@
 ---
 import '../styles/global.css';
+import { Code } from 'astro-expressive-code/components';
 
 const gleamExample = `import spillway
+import spillway/sequencing
 
-let state = spillway.new_sequence_state()
-let joined = spillway.client_join(state, "client-7", 0)
+let state =
+  spillway.new_sequence_state()
+  |> spillway.client_join("client-7", 0)
 
-case spillway.assign_sequence_number(joined, "client-7", 1, 0) {
-  Ok(result) -> result
-  Error(reason) -> reason
-}`;
+let assert sequencing.SequenceOk(next_state, assigned_sn, minimum_sn) =
+  spillway.assign_sequence_number(state, "client-7", 1, 0)
+
+#(next_state, assigned_sn, minimum_sn)`;
+
+const installCommand = `gleam add spillway`;
 ---
 
 <!doctype html>
@@ -41,9 +46,9 @@ case spillway.assign_sequence_number(joined, "client-7", 1, 0) {
     <main>
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero__copy">
-          <p class="signal">Gleam protocol logic for collaborative systems</p>
-          <h1 id="hero-title">Control Fluid protocol state at the typed boundary.</h1>
-          <p class="hero__lede">Spillway extracts the typed core of Fluid Framework sessions: sequencing, message validation, nacks, signals, summaries, and scoped JWT checks for BEAM systems that need predictable collaborative flow.</p>
+          <p class="signal">Typed protocol logic for Gleam and the BEAM</p>
+          <h1 id="hero-title">Keep Fluid protocol state explicit.</h1>
+          <p class="hero__lede">Spillway extracts the pure decision layer for Fluid-style collaboration: sequencing, feature negotiation, signal routing, summary validation, nacks, and scoped JWT checks without taking over your transport or storage.</p>
           <div class="hero__actions" aria-label="Primary actions">
             <a class="button" href="#install">Start with Gleam</a>
             <a class="text-link" href="#api">Read the API shape</a>
@@ -59,10 +64,10 @@ case spillway.assign_sequence_number(joined, "client-7", 1, 0) {
           <div class="channel" aria-label="Protocol state channels">
             <span><b>join</b><small>scope + tenant</small></span>
             <span><b>op</b><small>csn -> sn</small></span>
-            <span><b>signal</b><small>ack / nack</small></span>
+            <span><b>summary</b><small>ack / nack</small></span>
           </div>
           <ol class="locks">
-            <li><span>connect</span><strong>validate claims</strong></li>
+            <li><span>connect</span><strong>negotiate features</strong></li>
             <li><span>submit op</span><strong>assign sequence</strong></li>
             <li><span>summarize</span><strong>track minimum sequence</strong></li>
           </ol>
@@ -78,17 +83,17 @@ case spillway.assign_sequence_number(joined, "client-7", 1, 0) {
           <li>
             <span>Above</span>
             <strong>Transport + persistence</strong>
-            <p>Your server keeps sockets, storage, auth issuance, and document lifetime.</p>
+            <p>Your server owns sockets, storage, token issuance, and document lifetime.</p>
           </li>
           <li aria-current="step">
             <span>Here</span>
             <strong>Spillway protocol core</strong>
-            <p>Typed sequencing, session checks, nacks, signals, summaries, and JWT claim validation.</p>
+            <p>Pure Gleam functions for sequencing, feature negotiation, signal routing, summaries, nacks, and JWT claim validation.</p>
           </li>
           <li>
             <span>Below</span>
             <strong>Fluid clients</strong>
-            <p>Clients receive ordered protocol responses without depending on a full server stack.</p>
+            <p>Clients receive ordered protocol messages while your server keeps its own runtime shape.</p>
           </li>
         </ol>
       </section>
@@ -96,12 +101,12 @@ case spillway.assign_sequence_number(joined, "client-7", 1, 0) {
       <section class="flow-section" id="flow" aria-labelledby="flow-title">
         <div>
           <p class="section-label">Protocol flow</p>
-          <h2 id="flow-title">A narrow layer with firm gates.</h2>
+          <h2 id="flow-title">A narrow layer with explicit decisions.</h2>
         </div>
         <div class="flow-grid">
           <article>
-            <h3>Session admission</h3>
-            <p>Validate tenant, document, expiration, and scope before a client enters the collaborative channel.</p>
+            <h3>Connection checks</h3>
+            <p>Validate tenant, document, expiration, and scope, then negotiate protocol versions and feature flags.</p>
           </article>
           <article>
             <h3>Ordered operations</h3>
@@ -109,7 +114,7 @@ case spillway.assign_sequence_number(joined, "client-7", 1, 0) {
           </article>
           <article>
             <h3>Protocol responses</h3>
-            <p>Build nacks, summaries, acks, and signals with typed constructors instead of ad-hoc JSON shapes.</p>
+            <p>Build nacks, summary acks, summary nacks, sequenced ops, and routed signals from typed constructors.</p>
           </article>
         </div>
       </section>
@@ -118,23 +123,27 @@ case spillway.assign_sequence_number(joined, "client-7", 1, 0) {
         <div class="api-section__copy">
           <p class="section-label">Typed edges</p>
           <h2 id="api-title">The public API names the state changes.</h2>
-          <p>Spillway keeps wire-format concerns explicit: clients join, ops receive sequence numbers, claims are checked, and invalid messages become protocol nacks.</p>
+          <p>Spillway keeps protocol decisions explicit: clients join, ops receive sequence numbers, claims are checked, and invalid operations become protocol nacks.</p>
           <p class="api-links">
             <a class="text-link" href="https://hexdocs.pm/spillway/">HexDocs package docs</a>
             <a class="text-link" href="https://github.com/tylerbutler/spillway">Browse source</a>
           </p>
         </div>
-        <pre class="code-well" aria-label="Gleam example"><code>{gleamExample}</code></pre>
+        <div class="code-well" aria-label="Gleam sequencing example">
+          <Code code={gleamExample} lang="gleam" meta="title=sequencing.gleam" />
+        </div>
       </section>
 
       <section class="install-section" id="install" aria-labelledby="install-title">
         <div>
           <p class="section-label">Install</p>
           <h2 id="install-title">Add the protocol core, not the server.</h2>
-          <p>Spillway is intentionally small: Gleam stdlib plus JSON, ready to sit under a server layer that owns transport, persistence, and deployment policy.</p>
+          <p>Spillway is intentionally small: Gleam stdlib plus JSON, ready to sit under a server layer that owns sockets, persistence, and deployment policy.</p>
         </div>
         <div class="install-actions">
-          <pre class="install-command" aria-label="Install command"><code>gleam add spillway</code></pre>
+          <div class="install-command" aria-label="Install command">
+            <Code code={installCommand} lang="bash" meta="title=terminal" />
+          </div>
           <a class="text-link" href="https://hexdocs.pm/spillway/">Check package docs</a>
         </div>
       </section>

@@ -358,14 +358,12 @@ h3 {
   margin: 0;
   overflow-x: auto;
   border-radius: var(--radius-panel);
-  background: oklch(0.16 0.032 252);
-  color: oklch(0.94 0.02 220);
   font-family: var(--font-mono);
   font-size: clamp(0.88rem, 1.2vw, 1rem);
   line-height: 1.7;
 }
 
-.code-well { padding: clamp(1.1rem, 3vw, 1.65rem); }
+.code-well .expressive-code, .install-command .expressive-code { margin: 0; }
 
 .code-well code, .install-command code { font-variant-ligatures: none; }
 
