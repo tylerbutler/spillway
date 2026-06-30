@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Spillway icon</title>
+  <desc id="desc">A circular mark with three controlled water channels passing through a spillway gate.</desc>
+  <style>
+    .bg { fill: oklch(0.54 0.122 248); }
+    .gate { fill: none; stroke: oklch(1 0 0); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
+    .flow { fill: none; stroke: oklch(0.86 0.08 190); stroke-width: 7; stroke-linecap: round; }
+    .deep { fill: none; stroke: oklch(0.26 0.095 252); stroke-width: 7; stroke-linecap: round; }
+  </style>
+  <circle class="bg" cx="64" cy="64" r="58"/>
+  <path class="gate" d="M35 34h58M42 34v32c0 17 10 28 22 28s22-11 22-28V34"/>
+  <path class="flow" d="M30 68c11-8 20-8 31 0s20 8 31 0"/>
+  <path class="deep" d="M37 86c9-6 17-6 26 0s17 6 26 0"/>
+</svg>

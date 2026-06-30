@@ -1,4 +1,7 @@
 *.beam
 *.ez
 /build
+/.astro
+/node_modules
+/dist
 erl_crash.dump

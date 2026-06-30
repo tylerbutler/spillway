@@ -1,0 +1,107 @@
+---
+import '../styles/global.css';
+
+const gleamExample = `import spillway
+
+let state = spillway.new_sequence_state()
+let joined = spillway.client_join(state, "client-7", 0)
+
+case spillway.assign_sequence_number(joined, "client-7", 1, 0) {
+  Ok(result) -> result
+  Error(reason) -> reason
+}`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Spillway is a type-safe Gleam library for Fluid Framework protocol logic: sequencing, sessions, signals, summaries, nacks, and JWT validation.">
+    <title>Spillway · Typed Fluid protocol flow</title>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  </head>
+  <body>
+    <header class="masthead" aria-label="Site header">
+      <a class="brand" href="/" aria-label="Spillway home">
+        <img src="/icon.svg" alt="" width="38" height="38">
+        <span>spillway</span>
+      </a>
+      <nav class="nav" aria-label="Primary navigation">
+        <a href="#flow">Flow</a>
+        <a href="#api">API</a>
+        <a href="#install">Install</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero__copy">
+          <p class="signal">Gleam protocol logic for collaborative systems</p>
+          <h1 id="hero-title">Control the Fluid protocol before it reaches the floodplain.</h1>
+          <p class="hero__lede">Spillway extracts the typed core of Fluid Framework sessions: sequencing, message validation, nacks, signals, summaries, and scoped JWT checks for BEAM systems that need predictable collaborative flow.</p>
+          <div class="hero__actions" aria-label="Primary actions">
+            <a class="button" href="#install">Start with Gleam</a>
+            <a class="text-link" href="https://github.com/tylerbutler/spillway">View source</a>
+          </div>
+        </div>
+
+        <div class="control-panel" aria-label="Protocol control diagram">
+          <div class="gauge">
+            <span class="gauge__label">current_sn</span>
+            <span class="gauge__value">steady</span>
+          </div>
+          <div class="channel" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <ol class="locks">
+            <li><span>connect</span><strong>validate scope</strong></li>
+            <li><span>submit op</span><strong>assign sequence</strong></li>
+            <li><span>broadcast</span><strong>trim history</strong></li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="flow-section" id="flow" aria-labelledby="flow-title">
+        <div>
+          <p class="section-label">Protocol flow</p>
+          <h2 id="flow-title">A narrow layer with firm gates.</h2>
+        </div>
+        <div class="flow-grid">
+          <article>
+            <h3>Session admission</h3>
+            <p>Validate tenant, document, expiration, and scope before a client enters the collaborative channel.</p>
+          </article>
+          <article>
+            <h3>Ordered operations</h3>
+            <p>Track connected clients, client sequence numbers, reference sequence numbers, and minimum sequence progression.</p>
+          </article>
+          <article>
+            <h3>Protocol responses</h3>
+            <p>Build nacks, summaries, acks, and signals with typed constructors instead of ad-hoc JSON shapes.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="api-section" id="api" aria-labelledby="api-title">
+        <div class="api-section__copy">
+          <p class="section-label">Typed edges</p>
+          <h2 id="api-title">The public API names the pressure points.</h2>
+          <p>Spillway keeps wire-format concerns explicit: clients join, ops receive sequence numbers, claims are checked, and invalid messages become protocol nacks.</p>
+        </div>
+        <pre class="code-well" aria-label="Gleam example"><code>{gleamExample}</code></pre>
+      </section>
+
+      <section class="install-section" id="install" aria-labelledby="install-title">
+        <div>
+          <p class="section-label">Install</p>
+          <h2 id="install-title">Add the gate, not the whole dam.</h2>
+          <p>Spillway is intentionally small: Gleam stdlib plus JSON, ready to sit under a server layer that owns transport and persistence.</p>
+        </div>
+        <pre class="install-command" aria-label="Install command"><code>gleam add spillway</code></pre>
+      </section>
+    </main>
+  </body>
+</html>
