@@ -32,7 +32,7 @@ Headings use balanced wrapping, condensed technical proportions, safe letter spa
 
 ## Layout
 
-The homepage uses asymmetric panels, hydraulic channels, and structured rows rather than repeated identical feature cards. Sections should vary rhythm: a decisive hero, a compact protocol flow, a split code/API area, then a calm adoption band.
+The homepage uses asymmetric panels, hydraulic channels, and structured rows rather than repeated identical feature cards. Sections should vary rhythm: a decisive single-CTA hero, a stack boundary, a compact protocol flow, a split code/API area, a proof rail for evaluators, then a calm adoption band.
 
 Responsive behavior favors fluid CSS primitives: `clamp()` spacing, flexible wraps, and grids with `repeat(auto-fit, minmax(...))` only where a true two-dimensional layout is needed.
 
@@ -40,8 +40,8 @@ Responsive behavior favors fluid CSS primitives: `clamp()` spacing, flexible wra
 
 - **Masthead:** simple wordmark plus compact navigation.
 - **Icon:** engineered circular spillway mark with three gate piers, sequence nodes, and a controlled channel; use as favicon and brand mark.
-- **Hero panel:** large claim, constrained prose, CTA row, and a protocol diagram.
-- **Flow steps:** ordered only when the order explains real protocol movement.
+- **Hero panel:** large claim, constrained prose, one primary CTA, and a protocol diagram.
+- **Proof rail:** compact, verifiable trust signals; avoid fake metrics.
 - **Code well:** Expressive Code-rendered Gleam and shell snippets with syntax highlighting, readable dark contrast, copy affordances, and no fake terminal chrome beyond actual install commands.
 - **Link buttons:** filled primary and quiet text-link styles; no decorative border-plus-shadow ghost cards.
 
