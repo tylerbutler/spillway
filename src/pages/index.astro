@@ -27,12 +27,15 @@ const installCommand = `gleam add spillway`;
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Saira+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="icon" href="/spillway-mini.png" type="image/png">
   </head>
   <body>
     <header class="masthead" aria-label="Site header">
       <a class="brand" href="/" aria-label="Spillway home">
-        <img src="/icon.svg" alt="" width="38" height="38">
+        <picture class="brand__mark">
+          <source srcset="/spillway-mini.webp" type="image/webp">
+          <img src="/spillway-mini.png" alt="" width="64" height="46">
+        </picture>
         <span>spillway</span>
       </a>
       <nav class="nav" aria-label="Primary navigation">
@@ -54,21 +57,28 @@ const installCommand = `gleam add spillway`;
           </div>
         </div>
 
-        <div class="control-panel" aria-label="Protocol control diagram">
-          <div class="gauge">
-            <span class="gauge__label">current_sn</span>
-            <span class="gauge__value">monotonic</span>
+        <div class="hero__visual" aria-label="Protocol control diagram">
+          <picture class="hero-logo">
+            <source srcset="/spillway-logo.webp" type="image/webp">
+            <img src="/spillway-logo.png" alt="Spillway logo: a controlled cyan flow passing through a dark cobalt dam." width="812" height="714">
+          </picture>
+
+          <div class="control-panel">
+            <div class="gauge">
+              <span class="gauge__label">current_sn</span>
+              <span class="gauge__value">monotonic</span>
+            </div>
+            <div class="channel" aria-label="Protocol state channels">
+              <span><b>join</b><small>scope + tenant</small></span>
+              <span><b>op</b><small>CSN -> SN</small></span>
+              <span><b>summary</b><small>ack / nack</small></span>
+            </div>
+            <ol class="locks">
+              <li><span>connect</span><strong>negotiate features</strong></li>
+              <li><span>submit op</span><strong>assign sequence</strong></li>
+              <li><span>summarize</span><strong>track minimum sequence</strong></li>
+            </ol>
           </div>
-          <div class="channel" aria-label="Protocol state channels">
-            <span><b>join</b><small>scope + tenant</small></span>
-            <span><b>op</b><small>CSN -> SN</small></span>
-            <span><b>summary</b><small>ack / nack</small></span>
-          </div>
-          <ol class="locks">
-            <li><span>connect</span><strong>negotiate features</strong></li>
-            <li><span>submit op</span><strong>assign sequence</strong></li>
-            <li><span>summarize</span><strong>track minimum sequence</strong></li>
-          </ol>
         </div>
       </section>
 

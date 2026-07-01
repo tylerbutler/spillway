@@ -66,7 +66,18 @@ a:focus-visible {
   text-decoration: none;
 }
 
-.brand img { border-radius: 50%; }
+.brand__mark {
+  display: inline-flex;
+  align-items: center;
+  width: clamp(3.1rem, 7vw, 4rem);
+  flex: 0 0 auto;
+}
+
+.brand__mark img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
 
 .nav {
   gap: clamp(0.75rem, 3vw, 1.5rem);
@@ -172,10 +183,44 @@ h3 {
 
 .text-link { color: var(--color-primary-deep); font-weight: 700; }
 
+.hero__visual {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  align-items: center;
+  min-height: clamp(29rem, 58vw, 38rem);
+}
+
+.hero-logo {
+  position: absolute;
+  z-index: -1;
+  inset: clamp(-4rem, -7vw, -2rem) clamp(-4.5rem, -8vw, -1.5rem) auto auto;
+  width: min(118%, 35rem);
+  pointer-events: none;
+}
+
+.hero-logo::after {
+  position: absolute;
+  inset: 48% 14% 12% 20%;
+  z-index: -1;
+  border-radius: 50%;
+  background: oklch(0.66 0.145 188 / 0.22);
+  filter: blur(2.2rem);
+  content: "";
+}
+
+.hero-logo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .control-panel {
   position: relative;
   display: grid;
   gap: 1.2rem;
+  align-self: end;
+  margin-top: clamp(8rem, 16vw, 12rem);
   padding: clamp(1.1rem, 3vw, 1.6rem);
   border-radius: var(--radius-panel);
   background: var(--color-primary-deep);
@@ -443,6 +488,12 @@ h3 {
   .masthead, .install-section { align-items: flex-start; }
   .masthead, .hero, .boundary-section, .flow-section, .api-section, .evidence-section, .install-section { grid-template-columns: 1fr; }
   .masthead, .install-section { flex-direction: column; }
+  .hero__visual { min-height: 34rem; }
+  .hero-logo {
+    inset: -2.5rem -2.5rem auto auto;
+    width: min(112%, 30rem);
+  }
+  .control-panel { margin-top: 10rem; }
   .nav { width: 100%; flex-wrap: wrap; justify-content: flex-start; }
   h1 { max-width: 13ch; font-size: clamp(3.2rem, 16vw, 4.9rem); }
   .boundary-chain li, .proof-rail li { grid-template-columns: 1fr; gap: 0.35rem; }
