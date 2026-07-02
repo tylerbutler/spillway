@@ -146,6 +146,14 @@ pub fn current_sn(state: SequenceState) -> Int {
   sequencing.current_sn(state)
 }
 
+/// Reserve a sequence number for a server-minted system message (e.g. summaryAck)
+///
+/// Returns the advanced sequence state together with the reserved SN so the next
+/// client op is assigned a fresh, non-colliding sequence number.
+pub fn reserve_sequence_number(state: SequenceState) -> #(SequenceState, Int) {
+  sequencing.reserve_sequence_number(state)
+}
+
 /// Get current minimum sequence number
 pub fn current_msn(state: SequenceState) -> Int {
   sequencing.current_msn(state)

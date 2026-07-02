@@ -225,6 +225,28 @@ pub fn update_client_rsn(
   }
 }
 
+/// Reserve a sequence number for a server-generated system message
+///
+/// Some system messages (e.g. a `summaryAck`) are minted by the server itself
+/// rather than assigned from an inbound client op. They still consume a real
+/// sequence number, so the sequencer must advance to avoid handing the same SN
+/// to the next client op. This bumps `sequence_number` by 1 and returns the new
+/// state together with the reserved SN.
+pub fn reserve_sequence_number(state: SequenceState) -> #(SequenceState, Int) {
+  let reserved_sn = state.sequence_number + 1
+
+  let new_msn = calculate_msn(state.client_states, state.minimum_sequence_number)
+
+  let new_state =
+    SequenceState(
+      sequence_number: reserved_sn,
+      minimum_sequence_number: new_msn,
+      client_states: state.client_states,
+    )
+
+  #(new_state, reserved_sn)
+}
+
 /// Get the current sequence number
 pub fn current_sn(state: SequenceState) -> Int {
   state.sequence_number
