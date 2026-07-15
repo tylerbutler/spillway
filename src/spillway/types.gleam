@@ -1,18 +1,17 @@
 /// Core types for Fluid Framework protocol
 /// These types map directly to the protocol specification
-import gleam/dict.{type Dict}
 import gleam/dynamic.{type Dynamic}
 import gleam/option.{type Option}
+import signet/types as token
+
+/// User identity — re-exported from signet (the shared token/identity domain).
+pub type User =
+  token.User
 
 /// Connection mode - determines if client can submit operations
 pub type ConnectionMode {
   WriteMode
   ReadMode
-}
-
-/// User identity
-pub type User {
-  User(id: String, properties: Dict(String, Dynamic))
 }
 
 /// Client capabilities
@@ -123,42 +122,20 @@ pub type MessageOrigin {
   MessageOrigin(id: String, sequence_number: Int, minimum_sequence_number: Int)
 }
 
-/// JWT token claims
-pub type TokenClaims {
-  TokenClaims(
-    document_id: String,
-    scopes: List(String),
-    tenant_id: String,
-    user: User,
-    issued_at: Int,
-    expiration: Int,
-    version: String,
-    jti: Option(String),
-  )
-}
+/// JWT token claims — re-exported from signet (scopes are typed `List(Scope)`).
+pub type TokenClaims =
+  token.TokenClaims
 
-/// Permission scopes
-pub type Scope {
-  DocRead
-  DocWrite
-  SummaryWrite
-}
+/// Permission scopes — re-exported from signet (adds `SummaryRead`).
+pub type Scope =
+  token.Scope
 
 /// Convert scope to string
 pub fn scope_to_string(scope: Scope) -> String {
-  case scope {
-    DocRead -> "doc:read"
-    DocWrite -> "doc:write"
-    SummaryWrite -> "summary:write"
-  }
+  token.scope_to_string(scope)
 }
 
 /// Parse scope from string
-pub fn scope_from_string(s: String) -> Result(Scope, Nil) {
-  case s {
-    "doc:read" -> Ok(DocRead)
-    "doc:write" -> Ok(DocWrite)
-    "summary:write" -> Ok(SummaryWrite)
-    _ -> Error(Nil)
-  }
+pub fn scope_from_string(value: String) -> Result(Scope, Nil) {
+  token.scope_from_string(value)
 }

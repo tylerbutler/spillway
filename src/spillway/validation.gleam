@@ -7,7 +7,7 @@ import gleam/result
 
 import spillway/types.{
   type ConnectionMode, type DocumentMessage, type TokenClaims, ReadMode,
-  WriteMode,
+  WriteMode, scope_from_string, scope_to_string,
 }
 
 /// Validation error
@@ -54,15 +54,20 @@ pub fn validate_write_mode(mode: ConnectionMode) -> ValidationResult(Nil) {
   }
 }
 
-/// Validate that token has required scope
+/// Validate that token has required scope. Keeps the wire-string API; scopes on
+/// the claims are typed (`List(Scope)`), so compare via the typed form.
 pub fn validate_scope(
   claims: TokenClaims,
   required_scope: String,
 ) -> ValidationResult(Nil) {
-  case list.contains(claims.scopes, required_scope) {
-    True -> Ok(Nil)
-    False ->
-      Error(MissingScope(required: required_scope, available: claims.scopes))
+  let available = list.map(claims.scopes, scope_to_string)
+  case scope_from_string(required_scope) {
+    Ok(scope) ->
+      case list.contains(claims.scopes, scope) {
+        True -> Ok(Nil)
+        False -> Error(MissingScope(required: required_scope, available:))
+      }
+    Error(_) -> Error(MissingScope(required: required_scope, available:))
   }
 }
 
