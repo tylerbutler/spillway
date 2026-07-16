@@ -72,6 +72,23 @@ pub type ConnectedMessage {
     epoch: Option(String),
     /// Server environment info
     relay_service_agent: Option(String),
+    /// Latest summary checkpoint, if the document has been summarized. Clients
+    /// use this to bootstrap from a snapshot instead of replaying op history
+    /// from sequence number 1.
+    summary_context: Option(SummaryContext),
+  )
+}
+
+/// Summary checkpoint metadata included in a `connect_document_success`
+/// response when the document has an acknowledged summary. `handle` locates
+/// the stored snapshot (git tree/blob) and `sequence_number` is the sequence
+/// number the snapshot state is current as of.
+pub type SummaryContext {
+  SummaryContext(
+    /// Storage handle for the summary snapshot (e.g. git tree SHA)
+    handle: String,
+    /// Sequence number the snapshot is current as of
+    sequence_number: Int,
   )
 }
 

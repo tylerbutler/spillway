@@ -6,7 +6,7 @@
 import gleam/dict.{type Dict}
 import gleam/dynamic.{type Dynamic}
 import gleam/option
-import spillway/jwt
+import signet/jwt
 import spillway/message
 import spillway/nack
 import spillway/sequencing
@@ -144,6 +144,14 @@ pub fn assign_sequence_number(
 /// Get current sequence number
 pub fn current_sn(state: SequenceState) -> Int {
   sequencing.current_sn(state)
+}
+
+/// Reserve a sequence number for a server-minted system message (e.g. summaryAck)
+///
+/// Returns the advanced sequence state together with the reserved SN so the next
+/// client op is assigned a fresh, non-colliding sequence number.
+pub fn reserve_sequence_number(state: SequenceState) -> #(SequenceState, Int) {
+  sequencing.reserve_sequence_number(state)
 }
 
 /// Get current minimum sequence number
@@ -308,12 +316,12 @@ pub fn nack_error_limit_exceeded() -> NackErrorType {
 // JWT Validation API
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Standard permission scopes
-pub const jwt_scope_doc_read = jwt.scope_doc_read
+/// Standard permission scopes (wire strings, for the Elixir interop layer)
+pub const jwt_scope_doc_read = "doc:read"
 
-pub const jwt_scope_doc_write = jwt.scope_doc_write
+pub const jwt_scope_doc_write = "doc:write"
 
-pub const jwt_scope_summary_write = jwt.scope_summary_write
+pub const jwt_scope_summary_write = "summary:write"
 
 /// Validate that the token has not expired
 pub fn jwt_validate_expiration(
@@ -339,17 +347,25 @@ pub fn jwt_validate_document(
   jwt.validate_document(claims, request_document_id)
 }
 
-/// Validate that the token has the required scope
+/// Validate that the token has the required scope. Accepts the wire string for
+/// the Elixir interop layer, converting to a typed `Scope`.
 pub fn jwt_validate_scope(
   claims: TokenClaims,
   required_scope: String,
 ) -> Result(Nil, JwtValidationError) {
-  jwt.validate_scope(claims, required_scope)
+  case types.scope_from_string(required_scope) {
+    Ok(scope) -> jwt.validate_scope(claims, scope)
+    Error(_) ->
+      Error(jwt.InvalidClaim("scope", "unknown scope: " <> required_scope))
+  }
 }
 
-/// Check if token has a specific scope (returns Bool)
+/// Check if token has a specific scope (returns Bool). Accepts the wire string.
 pub fn jwt_has_scope(claims: TokenClaims, scope: String) -> Bool {
-  jwt.has_scope(claims, scope)
+  case types.scope_from_string(scope) {
+    Ok(parsed) -> jwt.has_scope(claims, parsed)
+    Error(_) -> False
+  }
 }
 
 /// Check if token has read permission
