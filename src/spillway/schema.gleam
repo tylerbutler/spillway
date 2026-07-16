@@ -71,7 +71,7 @@ fn connection_mode_schema() -> Json {
 }
 
 fn scope_schema() -> Json {
-  string_enum(["doc:read", "doc:write", "summary:write"])
+  string_enum(["doc:read", "doc:write", "summary:read", "summary:write"])
 }
 
 fn user_schema() -> Json {
