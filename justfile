@@ -13,13 +13,29 @@ default:
 
 # === STANDARD RECIPES ===
 
+# Download dependencies
+deps:
+    gleam deps download
+
 # Compile the project
 build:
     gleam build
 
+# Build with warnings as errors
+build-strict:
+    gleam build --warnings-as-errors
+
+# Type check without building
+check:
+    gleam check
+
 # Run tests
 test:
     gleam test
+
+# Build documentation
+docs:
+    gleam docs build
 
 # Format code
 format:
@@ -37,6 +53,23 @@ clean:
 ci: format lint test build
 
 alias pr := ci
+
+# === RELEASE ===
+
+# Bump the version, tag it, and push (CI creates the GitHub Release; no Hex publish)
+release version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "Working tree is not clean; commit or stash changes first." >&2
+        exit 1
+    fi
+    sd '^version = ".*"' 'version = "{{version}}"' gleam.toml
+    git add gleam.toml
+    git commit -m "chore(release): v{{version}}"
+    git tag -a "v{{version}}" -m "Release v{{version}}"
+    git push origin HEAD "v{{version}}"
+    echo "Pushed v{{version}} — the Release workflow will create the GitHub Release."
 
 # === SITE ===
 
