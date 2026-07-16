@@ -55,21 +55,19 @@ ci: format lint test build
 alias pr := ci
 
 # === RELEASE ===
+# Releases are driven by changie: add a fragment with `just change`, and on
+# merge to main a "Release X.Y.Z" PR is opened. Merging that PR tags the
+# commit and creates the GitHub Release (no Hex publish).
 
-# Bump the version, tag it, and push (CI creates the GitHub Release; no Hex publish)
-release version:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [ -n "$(git status --porcelain)" ]; then
-        echo "Working tree is not clean; commit or stash changes first." >&2
-        exit 1
-    fi
-    sd '^version = ".*"' 'version = "{{version}}"' gleam.toml
-    git add gleam.toml
-    git commit -m "chore(release): v{{version}}"
-    git tag -a "v{{version}}" -m "Release v{{version}}"
-    git push origin HEAD "v{{version}}"
-    echo "Pushed v{{version}} — the Release workflow will create the GitHub Release."
+alias ch := change
+
+# Record a changelog entry for the current change
+change:
+    changie new
+
+# Preview the version and changelog the next release would produce
+changelog-preview:
+    changie batch auto --dry-run
 
 # === SITE ===
 

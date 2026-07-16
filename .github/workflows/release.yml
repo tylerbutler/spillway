@@ -1,17 +1,17 @@
 name: Release
 
-# Cut a GitHub Release when a v* tag is pushed.
-# This package is intentionally NOT published to Hex — there is no
-# `gleam publish` (or tylerbutler/actions/gleam-publish) step here, and
-# there should never be one.
+# Open/update a "Release X.Y.Z" PR whenever unreleased changie fragments
+# land on main. Merging that PR (see auto-tag.yml) creates the tag and the
+# GitHub Release. This package is intentionally NOT published to Hex.
 
 on:
   push:
-    tags:
-      - "v*"
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
-  contents: write # required to create the GitHub Release
+  contents: write
+  pull-requests: write
 
 jobs:
   release:
@@ -19,16 +19,29 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
 
-      - name: Setup environment
-        uses: tylerbutler/actions/setup-gleam@ed7d5e5f1d4370a5ccf06503916e3c301102ab1c # ratchet:tylerbutler/actions/setup-gleam@main
+      - uses: tylerbutler/actions/changie-release@ed7d5e5f1d4370a5ccf06503916e3c301102ab1c # ratchet:tylerbutler/actions/changie-release@main
+        id: release
         with:
-          erlang-version: "28"
-          gleam-version: "1.16.0"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version-files: |
+            gleam.toml:version
 
-      - name: Run tests
-        run: just test
-
-      - name: Create GitHub Release
+      - name: Summary
+        if: steps.release.outputs.skipped != 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ github.ref_name }}" --verify-tag --generate-notes
+          VERSION: ${{ steps.release.outputs.version }}
+          PR_URL: ${{ steps.release.outputs.pr-url }}
+          PR_OP: ${{ steps.release.outputs.pr-operation }}
+        run: |
+          echo "### Release PR Created" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Version:** $VERSION" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **PR:** $PR_URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Operation:** $PR_OP" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Skipped
+        if: steps.release.outputs.skipped == 'true'
+        run: |
+          echo "### Release Skipped" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "No unreleased change fragments found." >> "$GITHUB_STEP_SUMMARY"
