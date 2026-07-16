@@ -235,7 +235,8 @@ pub fn update_client_rsn(
 pub fn reserve_sequence_number(state: SequenceState) -> #(SequenceState, Int) {
   let reserved_sn = state.sequence_number + 1
 
-  let new_msn = calculate_msn(state.client_states, state.minimum_sequence_number)
+  let new_msn =
+    calculate_msn(state.client_states, state.minimum_sequence_number)
 
   let new_state =
     SequenceState(
