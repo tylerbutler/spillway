@@ -26,23 +26,23 @@ Body text uses `--color-ink` on `--color-bg` for high contrast. Muted text uses 
 
 ## Typography
 
-Use system fonts to avoid adding runtime dependencies. The default stack is a humanist UI sans for body copy and headings; code uses the platform monospace stack only for real code and protocol labels, never as a decorative shorthand.
+Use a purposeful web-font pairing: Saira Condensed for the wordmark, headings, and protocol labels; Atkinson Hyperlegible for body copy and navigation. Code uses the platform monospace stack only for real code and protocol labels, never as decorative terminal shorthand.
 
-Headings use balanced wrapping, tight but safe letter spacing no tighter than `-0.03em`, and a display ceiling below `6rem`. Body copy is capped around 65-75 characters.
+Headings use balanced wrapping, condensed technical proportions, safe letter spacing no tighter than `-0.015em`, and a display ceiling below `6rem`. Body copy is capped around 65-75 characters and stays in Atkinson Hyperlegible for evaluation-mode readability.
 
 ## Layout
 
-The homepage uses asymmetric panels, hydraulic channels, and structured rows rather than repeated identical feature cards. Sections should vary rhythm: a decisive hero, a compact protocol flow, a split code/API area, then a calm adoption band.
+The homepage uses asymmetric panels, hydraulic channels, and structured rows rather than repeated identical feature cards. Sections should vary rhythm: a decisive single-CTA hero, a stack boundary, a compact protocol flow, a split code/API area, a proof rail for evaluators, then a calm adoption band.
 
 Responsive behavior favors fluid CSS primitives: `clamp()` spacing, flexible wraps, and grids with `repeat(auto-fit, minmax(...))` only where a true two-dimensional layout is needed.
 
 ## Components
 
 - **Masthead:** simple wordmark plus compact navigation.
-- **Icon:** circular spillway mark with three controlled wave gates; use as favicon and brand mark.
-- **Hero panel:** large claim, constrained prose, CTA row, and a protocol diagram.
-- **Flow steps:** ordered only when the order explains real protocol movement.
-- **Code well:** dark technical surface for real Gleam API names, with readable contrast and no fake terminal chrome.
+- **Icon:** engineered circular spillway mark with three gate piers, sequence nodes, and a controlled channel; use as favicon and brand mark.
+- **Hero panel:** large claim, constrained prose, one primary CTA, and a protocol diagram.
+- **Proof rail:** compact, verifiable trust signals; avoid fake metrics.
+- **Code well:** Expressive Code-rendered Gleam and shell snippets with syntax highlighting, readable dark contrast, copy affordances, and no fake terminal chrome beyond actual install commands.
 - **Link buttons:** filled primary and quiet text-link styles; no decorative border-plus-shadow ghost cards.
 
 ## Motion
