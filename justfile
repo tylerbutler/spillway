@@ -13,13 +13,29 @@ default:
 
 # === STANDARD RECIPES ===
 
+# Download dependencies
+deps:
+    gleam deps download
+
 # Compile the project
 build:
     gleam build
 
+# Build with warnings as errors
+build-strict:
+    gleam build --warnings-as-errors
+
+# Type check without building
+check:
+    gleam check
+
 # Run tests
 test:
     gleam test
+
+# Build documentation
+docs:
+    gleam docs build
 
 # Format code
 format:
@@ -37,6 +53,21 @@ clean:
 ci: format lint test build
 
 alias pr := ci
+
+# === RELEASE ===
+# Releases are driven by changie: add a fragment with `just change`, and on
+# merge to main a "Release X.Y.Z" PR is opened. Merging that PR tags the
+# commit and creates the GitHub Release (no Hex publish).
+
+alias ch := change
+
+# Record a changelog entry for the current change
+change:
+    changie new
+
+# Preview the version and changelog the next release would produce
+changelog-preview:
+    changie batch auto --dry-run
 
 # === SITE ===
 
