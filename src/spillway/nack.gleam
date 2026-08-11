@@ -97,7 +97,10 @@ pub fn invalid_scope(
 }
 
 /// Create a nack for rate limiting
-pub fn throttled(retry_after_seconds: Int, op: Option(DocumentMessage)) -> Nack {
+pub fn throttled(
+  retry_after_seconds: Int,
+  op: Option(DocumentMessage),
+) -> Nack {
   Nack(
     operation: op,
     sequence_number: -1,

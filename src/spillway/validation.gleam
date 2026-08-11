@@ -123,7 +123,10 @@ pub fn validate_csn(received_csn: Int, last_csn: Int) -> ValidationResult(Nil) {
 }
 
 /// Validate reference sequence number
-pub fn validate_rsn(received_rsn: Int, current_sn: Int) -> ValidationResult(Nil) {
+pub fn validate_rsn(
+  received_rsn: Int,
+  current_sn: Int,
+) -> ValidationResult(Nil) {
   case received_rsn <= current_sn {
     True -> Ok(Nil)
     False ->
