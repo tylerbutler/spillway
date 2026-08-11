@@ -10,6 +10,7 @@ target = "erlang"
 gleam_stdlib = ">= 0.62.0 and < 2.0.0"
 gleam_json = ">= 3.0.0 and < 4.0.0"
 signet = { git = "https://github.com/tylerbutler/signet", ref = "main" }
+windsock = { git = "https://github.com/tylerbutler/windsock", ref = "main" }
 
 [dev-dependencies]
 startest = ">= 0.8.0 and < 1.0.0"

@@ -152,7 +152,9 @@ pub fn empty_summary_tree() -> SummaryTree {
 }
 
 /// Create a summary tree with entries
-pub fn new_summary_tree(entries: List(#(String, SummaryObject))) -> SummaryTree {
+pub fn new_summary_tree(
+  entries: List(#(String, SummaryObject)),
+) -> SummaryTree {
   SummaryTree(tree: dict.from_list(entries))
 }
 

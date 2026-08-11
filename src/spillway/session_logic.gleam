@@ -163,7 +163,9 @@ pub type SequencedOpParams {
 
 /// Build a sequenced op as a list of key-value pairs.
 /// The caller converts this to a map in their native format.
-pub fn build_sequenced_op(params: SequencedOpParams) -> List(#(String, Dynamic)) {
+pub fn build_sequenced_op(
+  params: SequencedOpParams,
+) -> List(#(String, Dynamic)) {
   [
     #("clientId", coerce(params.client_id)),
     #("sequenceNumber", coerce(params.sequence_number)),

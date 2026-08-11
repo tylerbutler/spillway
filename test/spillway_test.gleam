@@ -376,6 +376,35 @@ pub fn normalize_v2_envelope_signal_test() {
   result.targeted_clients |> expect.to_equal(option.Some(["a", "b"]))
 }
 
+pub fn normalized_to_map_carries_type_and_targeting_test() {
+  let raw =
+    dict.from_list([
+      #("content", coerce("payload")),
+      #("type", coerce("cursor")),
+      #("targetedClients", coerce(["c2"])),
+    ])
+
+  let map = signals.normalized_to_map(signals.normalize_signal(raw))
+  dict.get(map, "type") |> expect.to_equal(Ok(coerce("cursor")))
+  dict.get(map, "targetedClients") |> expect.to_equal(Ok(coerce(["c2"])))
+}
+
+pub fn build_summary_ack_shape_test() {
+  let fields = session_logic.build_summary_ack("handle-1", 10, 5, 1000)
+  get_field(fields, "sequenceNumber") |> expect.to_equal(Ok(coerce(11)))
+  get_field(fields, "referenceSequenceNumber")
+  |> expect.to_equal(Ok(coerce(10)))
+  get_field(fields, "type") |> expect.to_equal(Ok(coerce("summaryAck")))
+}
+
+fn get_field(fields: List(#(String, a)), key: String) -> Result(a, Nil) {
+  case fields {
+    [] -> Error(Nil)
+    [#(k, v), ..] if k == key -> Ok(v)
+    [_, ..rest] -> get_field(rest, key)
+  }
+}
+
 // Helper for tests - coerce a value to Dynamic
 @external(erlang, "gleam_stdlib", "identity")
 fn coerce(value: a) -> dynamic.Dynamic
