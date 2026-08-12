@@ -9,7 +9,7 @@
     "site:dev": "astro dev"
   },
   "devDependencies": {
-    "astro": "^6.4.6",
+    "astro": "^7.1.0",
     "astro-expressive-code": "^0.44.0"
   }
 }
