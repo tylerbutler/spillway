@@ -1,0 +1,15 @@
+name: Auto-tag release
+
+# When a "Release" PR (labeled `release`) is merged, create the vX.Y.Z tag
+# and a GitHub Release with the changie notes. No Hex publish happens here.
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  auto-tag:
+    uses: tylerbutler/actions/.github/workflows/auto-tag.yml@ed7d5e5f1d4370a5ccf06503916e3c301102ab1c # ratchet:tylerbutler/actions/.github/workflows/auto-tag.yml@main
+    with:
+      create-release: true
