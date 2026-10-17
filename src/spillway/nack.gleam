@@ -4,7 +4,7 @@
 import gleam/int
 import gleam/option.{type Option}
 
-import spillway/types.{type DocumentMessage}
+import spillway/types.{type DocumentMessage, type Scope, scope_to_string}
 
 /// Error type classification
 pub type NackErrorType {
@@ -54,10 +54,10 @@ pub type NackContent {
 }
 
 /// Nack message sent to client
-pub type Nack {
+pub type Nack(payload) {
   Nack(
     /// The rejected operation (may be None)
-    operation: Option(DocumentMessage),
+    operation: Option(DocumentMessage(payload)),
     /// Sequence number to catch up to (-1 for non-op nacks)
     sequence_number: Int,
     /// Error details
@@ -66,7 +66,10 @@ pub type Nack {
 }
 
 /// Create a nack for an invalid message format
-pub fn bad_request(message: String, op: Option(DocumentMessage)) -> Nack {
+pub fn bad_request(
+  message: String,
+  op: Option(DocumentMessage(payload)),
+) -> Nack(payload) {
   Nack(
     operation: op,
     sequence_number: -1,
@@ -81,16 +84,16 @@ pub fn bad_request(message: String, op: Option(DocumentMessage)) -> Nack {
 
 /// Create a nack for missing required scope
 pub fn invalid_scope(
-  required_scope: String,
-  op: Option(DocumentMessage),
-) -> Nack {
+  required_scope: Scope,
+  op: Option(DocumentMessage(payload)),
+) -> Nack(payload) {
   Nack(
     operation: op,
     sequence_number: -1,
     content: NackContent(
       code: 403,
       error_type: InvalidScopeError,
-      message: "Missing required scope: " <> required_scope,
+      message: "Missing required scope: " <> scope_to_string(required_scope),
       retry_after: option.None,
     ),
   )
@@ -99,8 +102,8 @@ pub fn invalid_scope(
 /// Create a nack for rate limiting
 pub fn throttled(
   retry_after_seconds: Int,
-  op: Option(DocumentMessage),
-) -> Nack {
+  op: Option(DocumentMessage(payload)),
+) -> Nack(payload) {
   Nack(
     operation: op,
     sequence_number: -1,
@@ -114,7 +117,10 @@ pub fn throttled(
 }
 
 /// Create a nack for server limit exceeded
-pub fn limit_exceeded(message: String, op: Option(DocumentMessage)) -> Nack {
+pub fn limit_exceeded(
+  message: String,
+  op: Option(DocumentMessage(payload)),
+) -> Nack(payload) {
   Nack(
     operation: op,
     sequence_number: -1,
@@ -128,7 +134,7 @@ pub fn limit_exceeded(message: String, op: Option(DocumentMessage)) -> Nack {
 }
 
 /// Create a nack for read-only client trying to write
-pub fn read_only_client(op: Option(DocumentMessage)) -> Nack {
+pub fn read_only_client(op: Option(DocumentMessage(payload))) -> Nack(payload) {
   Nack(
     operation: op,
     sequence_number: -1,
@@ -145,8 +151,8 @@ pub fn read_only_client(op: Option(DocumentMessage)) -> Nack {
 pub fn invalid_csn(
   expected: Int,
   received: Int,
-  op: Option(DocumentMessage),
-) -> Nack {
+  op: Option(DocumentMessage(payload)),
+) -> Nack(payload) {
   Nack(
     operation: op,
     sequence_number: -1,
@@ -166,8 +172,8 @@ pub fn invalid_csn(
 pub fn message_too_large(
   max_size: Int,
   actual_size: Int,
-  op: Option(DocumentMessage),
-) -> Nack {
+  op: Option(DocumentMessage(payload)),
+) -> Nack(payload) {
   Nack(
     operation: op,
     sequence_number: -1,
@@ -187,8 +193,8 @@ pub fn message_too_large(
 pub fn invalid_rsn(
   current_sn: Int,
   received_rsn: Int,
-  op: Option(DocumentMessage),
-) -> Nack {
+  op: Option(DocumentMessage(payload)),
+) -> Nack(payload) {
   Nack(
     operation: op,
     sequence_number: -1,
@@ -205,7 +211,7 @@ pub fn invalid_rsn(
 }
 
 /// Create a nack for an unknown client
-pub fn unknown_client(client_id: String) -> Nack {
+pub fn unknown_client(client_id: String) -> Nack(payload) {
   Nack(
     operation: option.None,
     sequence_number: -1,

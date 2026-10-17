@@ -1,8 +1,9 @@
 /// Protocol message types for WebSocket communication
 /// Covers connection, operations, and signals
 import gleam/dict.{type Dict}
-import gleam/dynamic.{type Dynamic}
 import gleam/option.{type Option}
+import spillway/signals.{type SignalMessage}
+import spillway/summary.{type SummaryContext}
 
 import spillway/types.{
   type Client, type ConnectionMode, type SequencedDocumentMessage,
@@ -31,14 +32,14 @@ pub type ConnectMessage {
     /// Expected document epoch
     epoch: Option(String),
     /// Client feature flags
-    supported_features: Option(Dict(String, Dynamic)),
+    supported_features: Option(Dict(String, Bool)),
     /// Client environment info
     relay_user_agent: Option(String),
   )
 }
 
 /// IConnected - sent by server when connection succeeds
-pub type ConnectedMessage {
+pub type ConnectedMessage(payload) {
   ConnectedMessage(
     /// Validated token claims
     claims: TokenClaims,
@@ -55,13 +56,13 @@ pub type ConnectedMessage {
     /// Currently connected clients
     initial_clients: List(SignalClient),
     /// Initial messages (typically empty)
-    initial_messages: List(SequencedDocumentMessage),
+    initial_messages: List(SequencedDocumentMessage(payload)),
     /// Initial signals (typically empty)
-    initial_signals: List(SignalMessage),
+    initial_signals: List(SignalMessage(payload)),
     /// Server-supported protocol versions
     supported_versions: List(String),
     /// Server-supported features
-    supported_features: Dict(String, Dynamic),
+    supported_features: Dict(String, Bool),
     /// Negotiated protocol version
     version: String,
     /// Connection timestamp
@@ -79,19 +80,6 @@ pub type ConnectedMessage {
   )
 }
 
-/// Summary checkpoint metadata included in a `connect_document_success`
-/// response when the document has an acknowledged summary. `handle` locates
-/// the stored snapshot (git tree/blob) and `sequence_number` is the sequence
-/// number the snapshot state is current as of.
-pub type SummaryContext {
-  SummaryContext(
-    /// Storage handle for the summary snapshot (e.g. git tree SHA)
-    handle: String,
-    /// Sequence number the snapshot is current as of
-    sequence_number: Int,
-  )
-}
-
 /// Connection error response
 pub type ConnectError {
   ConnectError(
@@ -102,28 +90,10 @@ pub type ConnectError {
   )
 }
 
-/// Signal message (v2 format)
-pub type SignalMessage {
-  SignalMessage(
-    /// Sending client ID (null for server-generated)
-    client_id: Option(String),
-    /// Signal content
-    content: Dynamic,
-    /// Signal type
-    signal_type: Option(String),
-    /// Signal counter
-    client_connection_number: Option(Int),
-    /// Sequence context
-    reference_sequence_number: Option(Int),
-    /// Target client (if targeted)
-    target_client_id: Option(String),
-  )
-}
-
 /// Sent signal message (client -> server, v2)
-pub type SentSignalMessage {
+pub type SentSignalMessage(payload) {
   SentSignalMessage(
-    content: Dynamic,
+    content: payload,
     signal_type: Option(String),
     client_connection_number: Option(Int),
     reference_sequence_number: Option(Int),
@@ -132,12 +102,12 @@ pub type SentSignalMessage {
 }
 
 /// Op broadcast message (server -> clients)
-pub type OpMessage {
+pub type OpMessage(payload) {
   OpMessage(
     /// Document ID
     document_id: String,
     /// Sequenced operations
-    ops: List(SequencedDocumentMessage),
+    ops: List(SequencedDocumentMessage(payload)),
   )
 }
 

@@ -15,11 +15,17 @@ default:
 
 # Compile the project
 build:
-    gleam build
+    gleam build --target erlang
+    gleam build --target javascript
 
 # Run tests
 test:
-    gleam test
+    gleam test --target erlang
+    gleam test --target javascript
+
+# Run shared contracts in a real browser (install Chromium first)
+test-browser:
+    pnpm run test:browser
 
 # Format code
 format:
@@ -34,7 +40,7 @@ clean:
     rm -rf build
 
 # Full validation workflow
-ci: format lint test build
+ci: lint test build test-browser
 
 alias pr := ci
 

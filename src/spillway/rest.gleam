@@ -10,55 +10,11 @@
 //// response-shape decision to these functions so the wire format lives in
 //// one place.
 
-import gleam/dynamic.{type Dynamic}
 import gleam/int
+import gleam/json.{type Json}
 import gleam/list
 import gleam/string
-
-/// An arbitrary JSON-shaped BEAM term — a value the (Elixir) caller already
-/// decoded, or will encode, with its own JSON library — carried through these
-/// response shapes untouched. A dedicated type rather than `Dynamic` so the
-/// signatures say exactly what crosses this FFI boundary.
-pub type JsonTerm
-
-/// Mark a dynamic value as a `JsonTerm`. Runtime identity — the distinction
-/// exists only at compile time, so Elixir callers pass their terms unchanged.
-@external(erlang, "gleam_stdlib", "identity")
-pub fn json_term(value: Dynamic) -> JsonTerm
-
-/// The reverse boundary crossing, for callers that need to inspect a term.
-@external(erlang, "gleam_stdlib", "identity")
-pub fn json_term_to_dynamic(value: JsonTerm) -> Dynamic
-
-fn term_string(value: String) -> JsonTerm {
-  json_term(dynamic.string(value))
-}
-
-fn term_int(value: Int) -> JsonTerm {
-  json_term(dynamic.int(value))
-}
-
-fn term_bool(value: Bool) -> JsonTerm {
-  json_term(dynamic.bool(value))
-}
-
-fn term_nil() -> JsonTerm {
-  json_term(dynamic.nil())
-}
-
-fn term_list(values: List(JsonTerm)) -> JsonTerm {
-  json_term(dynamic.list(list.map(values, json_term_to_dynamic)))
-}
-
-fn term_properties(entries: List(#(String, JsonTerm))) -> JsonTerm {
-  json_term(
-    dynamic.properties(
-      list.map(entries, fn(entry) {
-        #(dynamic.string(entry.0), json_term_to_dynamic(entry.1))
-      }),
-    ),
-  )
-}
+import spillway/types.{type SequencedDocumentMessage}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Base URL / git object URL construction
@@ -117,38 +73,38 @@ pub fn format_blob_response(
   sha: String,
   size: Int,
   content_base64: String,
-) -> List(#(String, JsonTerm)) {
-  [
-    #("sha", term_string(sha)),
-    #("size", term_int(size)),
-    #("content", term_string(content_base64)),
-    #("encoding", term_string("base64")),
-    #("url", term_string(blob_url(base_url, tenant_id, sha))),
-  ]
+) -> Json {
+  json.object([
+    #("sha", json.string(sha)),
+    #("size", json.int(size)),
+    #("content", json.string(content_base64)),
+    #("encoding", json.string("base64")),
+    #("url", json.string(blob_url(base_url, tenant_id, sha))),
+  ])
 }
 
-/// One entry of a tree's `tree` array: `#(path, mode, sha, type)`.
-pub type TreeEntryIn =
-  #(String, String, String, String)
+pub type TreeEntry {
+  TreeEntry(path: String, mode: String, sha: String, entry_type: String)
+}
 
 fn format_tree_entry(
   base_url: String,
   tenant_id: String,
-  entry: TreeEntryIn,
-) -> JsonTerm {
-  let #(path, mode, sha, entry_type) = entry
+  entry: TreeEntry,
+) -> Json {
+  let TreeEntry(path, mode, sha, entry_type) = entry
 
   let entry_url = case entry_type {
-    "blob" -> term_string(blob_url(base_url, tenant_id, sha))
-    "tree" -> term_string(tree_url(base_url, tenant_id, sha))
-    _ -> term_nil()
+    "blob" -> json.string(blob_url(base_url, tenant_id, sha))
+    "tree" -> json.string(tree_url(base_url, tenant_id, sha))
+    _ -> json.null()
   }
 
-  term_properties([
-    #("path", term_string(path)),
-    #("mode", term_string(mode)),
-    #("sha", term_string(sha)),
-    #("type", term_string(entry_type)),
+  json.object([
+    #("path", json.string(path)),
+    #("mode", json.string(mode)),
+    #("sha", json.string(sha)),
+    #("type", json.string(entry_type)),
     #("url", entry_url),
   ])
 }
@@ -157,16 +113,16 @@ pub fn format_tree_response(
   base_url: String,
   tenant_id: String,
   sha: String,
-  entries: List(TreeEntryIn),
-) -> List(#(String, JsonTerm)) {
+  entries: List(TreeEntry),
+) -> Json {
   let formatted_entries =
     list.map(entries, format_tree_entry(base_url, tenant_id, _))
 
-  [
-    #("sha", term_string(sha)),
-    #("url", term_string(tree_url(base_url, tenant_id, sha))),
-    #("tree", term_list(formatted_entries)),
-  ]
+  json.object([
+    #("sha", json.string(sha)),
+    #("url", json.string(tree_url(base_url, tenant_id, sha))),
+    #("tree", json.preprocessed_array(formatted_entries)),
+  ])
 }
 
 pub fn format_commit_response(
@@ -175,33 +131,33 @@ pub fn format_commit_response(
   sha: String,
   tree_sha: String,
   parents: List(String),
-  message: JsonTerm,
-  author: JsonTerm,
-  committer: JsonTerm,
-) -> List(#(String, JsonTerm)) {
+  message: Json,
+  author: Json,
+  committer: Json,
+) -> Json {
   let tree_obj =
-    term_properties([
-      #("sha", term_string(tree_sha)),
-      #("url", term_string(tree_url(base_url, tenant_id, tree_sha))),
+    json.object([
+      #("sha", json.string(tree_sha)),
+      #("url", json.string(tree_url(base_url, tenant_id, tree_sha))),
     ])
 
   let formatted_parents =
     list.map(parents, fn(parent_sha) {
-      term_properties([
-        #("sha", term_string(parent_sha)),
-        #("url", term_string(commit_url(base_url, tenant_id, parent_sha))),
+      json.object([
+        #("sha", json.string(parent_sha)),
+        #("url", json.string(commit_url(base_url, tenant_id, parent_sha))),
       ])
     })
 
-  [
-    #("sha", term_string(sha)),
+  json.object([
+    #("sha", json.string(sha)),
     #("tree", tree_obj),
-    #("parents", term_list(formatted_parents)),
+    #("parents", json.preprocessed_array(formatted_parents)),
     #("message", message),
     #("author", author),
     #("committer", committer),
-    #("url", term_string(commit_url(base_url, tenant_id, sha))),
-  ]
+    #("url", json.string(commit_url(base_url, tenant_id, sha))),
+  ])
 }
 
 pub fn format_ref_response(
@@ -209,19 +165,19 @@ pub fn format_ref_response(
   tenant_id: String,
   ref_path: String,
   sha: String,
-) -> List(#(String, JsonTerm)) {
+) -> Json {
   let object =
-    term_properties([
-      #("sha", term_string(sha)),
-      #("type", term_string("commit")),
-      #("url", term_string(commit_url(base_url, tenant_id, sha))),
+    json.object([
+      #("sha", json.string(sha)),
+      #("type", json.string("commit")),
+      #("url", json.string(commit_url(base_url, tenant_id, sha))),
     ])
 
-  [
-    #("ref", term_string(ref_path)),
+  json.object([
+    #("ref", json.string(ref_path)),
     #("object", object),
-    #("url", term_string(ref_url(base_url, tenant_id, ref_path))),
-  ]
+    #("url", json.string(ref_url(base_url, tenant_id, ref_path))),
+  ])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -232,12 +188,12 @@ pub fn format_document_response(
   id: String,
   tenant_id: String,
   sequence_number: Int,
-) -> List(#(String, JsonTerm)) {
-  [
-    #("id", term_string(id)),
-    #("tenantId", term_string(tenant_id)),
-    #("sequenceNumber", term_int(sequence_number)),
-  ]
+) -> Json {
+  json.object([
+    #("id", json.string(id)),
+    #("tenantId", json.string(tenant_id)),
+    #("sequenceNumber", json.int(sequence_number)),
+  ])
 }
 
 /// Build the `GET /documents/:tenant/session/:id` response shape.
@@ -246,17 +202,17 @@ pub fn session_info(
   tenant_id: String,
   document_id: String,
   is_alive: Bool,
-) -> List(#(String, JsonTerm)) {
-  [
-    #("ordererUrl", term_string(host <> "/socket")),
-    #("historianUrl", term_string(host <> "/repos/" <> tenant_id)),
+) -> Json {
+  json.object([
+    #("ordererUrl", json.string(host <> "/socket")),
+    #("historianUrl", json.string(host <> "/repos/" <> tenant_id)),
     #(
       "deltaStreamUrl",
-      term_string(host <> "/deltas/" <> tenant_id <> "/" <> document_id),
+      json.string(host <> "/deltas/" <> tenant_id <> "/" <> document_id),
     ),
-    #("isSessionAlive", term_bool(is_alive)),
-    #("isSessionActive", term_bool(is_alive)),
-  ]
+    #("isSessionAlive", json.bool(is_alive)),
+    #("isSessionActive", json.bool(is_alive)),
+  ])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -272,34 +228,26 @@ pub fn requires_data_field(msg_type: String) -> Bool {
 }
 
 /// Build a single `ISequencedDocumentMessage` for `GET /deltas/:tenant/:id`.
-/// `data` should be the JSON-stringified sidecar when `requires_data_field`
-/// is `True` for `msg_type`; it is omitted from the response otherwise.
-pub fn format_delta_message(
-  sequence_number: Int,
-  client_sequence_number: Int,
-  minimum_sequence_number: Int,
-  client_id: JsonTerm,
-  reference_sequence_number: Int,
-  msg_type: String,
-  contents: JsonTerm,
-  metadata: JsonTerm,
-  timestamp: Int,
-  data: JsonTerm,
-) -> List(#(String, JsonTerm)) {
+/// `data` is a JSON-stringified sidecar for join/leave messages only.
+/// Missing client IDs, metadata, and system data are encoded as null.
+pub fn format_delta_message(message: SequencedDocumentMessage(Json)) -> Json {
   let base = [
-    #("sequenceNumber", term_int(sequence_number)),
-    #("clientSequenceNumber", term_int(client_sequence_number)),
-    #("minimumSequenceNumber", term_int(minimum_sequence_number)),
-    #("clientId", client_id),
-    #("referenceSequenceNumber", term_int(reference_sequence_number)),
-    #("type", term_string(msg_type)),
-    #("contents", contents),
-    #("metadata", metadata),
-    #("timestamp", term_int(timestamp)),
+    #("sequenceNumber", json.int(message.sequence_number)),
+    #("clientSequenceNumber", json.int(message.client_sequence_number)),
+    #("minimumSequenceNumber", json.int(message.minimum_sequence_number)),
+    #("clientId", json.nullable(message.client_id, json.string)),
+    #("referenceSequenceNumber", json.int(message.reference_sequence_number)),
+    #("type", json.string(message.message_type)),
+    #("contents", message.contents),
+    #("metadata", json.nullable(message.metadata, fn(value) { value })),
+    #("timestamp", json.int(message.timestamp)),
   ]
 
-  case requires_data_field(msg_type) {
-    True -> list.append(base, [#("data", data)])
-    False -> base
+  case requires_data_field(message.message_type) {
+    True ->
+      json.object(
+        list.append(base, [#("data", json.nullable(message.data, json.string))]),
+      )
+    False -> json.object(base)
   }
 }

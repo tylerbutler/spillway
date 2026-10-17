@@ -1,9 +1,8 @@
 //// Engine.IO / Socket.IO transport framing for Fluid (Routerlicious)
 //// compatibility.
 ////
-//// Wraps `windsock`'s Socket.IO event-frame primitives behind a small
-//// BEAM-callable surface, so servers (e.g. an Elixir WebSock adapter or a
-//// Gleam transport) only classify/encode frames through spillway instead of
+//// Wraps `windsock`'s Socket.IO event-frame primitives behind a portable
+//// Gleam API, so applications classify/encode frames through spillway instead of
 //// re-deriving Engine.IO/Socket.IO framing themselves. This module owns no
 //// session/runtime state — callers still drive their own `connect_document`
 //// auth and session runtime and just pass the resulting event payloads back

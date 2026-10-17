@@ -6,8 +6,8 @@ import gleam/list
 import gleam/result
 
 import spillway/types.{
-  type ConnectionMode, type DocumentMessage, type TokenClaims, ReadMode,
-  WriteMode, scope_from_string, scope_to_string,
+  type ConnectionMode, type DocumentMessage, type Scope, type TokenClaims,
+  ReadMode, WriteMode, scope_to_string,
 }
 
 /// Validation error
@@ -25,7 +25,7 @@ pub type ValidationError {
   /// Token is expired
   TokenExpired(expired_at: Int, current_time: Int)
   /// Token missing required scope
-  MissingScope(required: String, available: List(String))
+  MissingScope(required: Scope, available: List(Scope))
   /// Client mode doesn't allow operation
   OperationNotAllowed(mode: ConnectionMode, operation: String)
 }
@@ -54,20 +54,15 @@ pub fn validate_write_mode(mode: ConnectionMode) -> ValidationResult(Nil) {
   }
 }
 
-/// Validate that token has required scope. Keeps the wire-string API; scopes on
-/// the claims are typed (`List(Scope)`), so compare via the typed form.
+/// Validate that the token has the required typed scope.
 pub fn validate_scope(
   claims: TokenClaims,
-  required_scope: String,
+  required_scope: Scope,
 ) -> ValidationResult(Nil) {
-  let available = list.map(claims.scopes, scope_to_string)
-  case scope_from_string(required_scope) {
-    Ok(scope) ->
-      case list.contains(claims.scopes, scope) {
-        True -> Ok(Nil)
-        False -> Error(MissingScope(required: required_scope, available:))
-      }
-    Error(_) -> Error(MissingScope(required: required_scope, available:))
+  case list.contains(claims.scopes, required_scope) {
+    True -> Ok(Nil)
+    False ->
+      Error(MissingScope(required: required_scope, available: claims.scopes))
   }
 }
 
@@ -139,7 +134,7 @@ pub fn validate_rsn(
 
 /// Validate a complete document message for submission
 pub fn validate_document_message(
-  msg: DocumentMessage,
+  msg: DocumentMessage(payload),
   client_mode: ConnectionMode,
   last_csn: Int,
   current_sn: Int,
@@ -182,7 +177,8 @@ pub fn format_error(error: ValidationError) -> String {
     TokenExpired(expired_at, _current_time) ->
       "Token expired at " <> int.to_string(expired_at)
 
-    MissingScope(required, _available) -> "Missing required scope: " <> required
+    MissingScope(required, _available) ->
+      "Missing required scope: " <> scope_to_string(required)
 
     OperationNotAllowed(_mode, operation) ->
       "Operation '" <> operation <> "' not allowed in read-only mode"

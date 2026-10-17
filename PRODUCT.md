@@ -6,7 +6,7 @@ brand
 
 ## Users
 
-Gleam and BEAM developers evaluating Fluid protocol infrastructure. They are likely comparing whether spillway can give their collaborative systems a smaller, typed core for sequencing, sessions, signals, summaries, nacks, and JWT validation without pulling in a full server stack.
+Gleam developers building Fluid protocol infrastructure on Erlang, Node.js, or browsers. They need typed sequencing, sessions, signals, summaries, nacks, and claim validation in a library that leaves the server runtime to the application.
 
 ## Product Purpose
 

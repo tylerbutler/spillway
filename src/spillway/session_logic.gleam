@@ -1,13 +1,11 @@
 /// Pure business logic for document collaboration sessions
 ///
-/// These functions extract the decision-making logic from the Elixir
-/// session GenServer into type-safe Gleam. They are pure functions
-/// with no side effects (no IO, no process communication).
+/// Applications own the session runtime. These functions make protocol
+/// decisions without IO or process communication.
 import gleam/dict.{type Dict}
-import gleam/dynamic.{type Dynamic}
+import gleam/json.{type Json}
 import gleam/list
 import gleam/option.{type Option, None, Some}
-import gleam/string
 
 // =============================================================================
 // Feature Negotiation
@@ -57,31 +55,6 @@ pub fn negotiate_version(
     Ok("^1.0.0") -> "1.0.0"
     Ok(v) -> v
     Error(_) -> "0.1.0"
-  }
-}
-
-// =============================================================================
-// Summarize Validation
-// =============================================================================
-
-/// Validate that summarize operation contents have all required fields.
-/// Returns Ok(Nil) if valid, Error with missing field names if not.
-pub fn validate_summarize_contents(
-  contents: Dict(String, Dynamic),
-) -> Result(Nil, String) {
-  let required = ["handle", "message", "parents", "head"]
-
-  let missing =
-    list.filter(required, fn(field) {
-      case dict.get(contents, field) {
-        Ok(_) -> False
-        Error(_) -> True
-      }
-    })
-
-  case missing {
-    [] -> Ok(Nil)
-    _ -> Error("missing fields: " <> string.join(missing, ", "))
   }
 }
 
@@ -155,60 +128,52 @@ pub type SequencedOpParams {
     client_sequence_number: Int,
     reference_sequence_number: Int,
     op_type: String,
-    contents: Dynamic,
-    metadata: Dynamic,
+    contents: Json,
+    metadata: Json,
     timestamp: Int,
   )
 }
 
-/// Build a sequenced op as a list of key-value pairs.
-/// The caller converts this to a map in their native format.
-pub fn build_sequenced_op(
-  params: SequencedOpParams,
-) -> List(#(String, Dynamic)) {
-  [
-    #("clientId", coerce(params.client_id)),
-    #("sequenceNumber", coerce(params.sequence_number)),
-    #("minimumSequenceNumber", coerce(params.minimum_sequence_number)),
-    #("clientSequenceNumber", coerce(params.client_sequence_number)),
-    #("referenceSequenceNumber", coerce(params.reference_sequence_number)),
-    #("type", coerce(params.op_type)),
+/// Build a complete sequenced operation JSON object.
+pub fn build_sequenced_op(params: SequencedOpParams) -> Json {
+  json.object([
+    #("clientId", json.string(params.client_id)),
+    #("sequenceNumber", json.int(params.sequence_number)),
+    #("minimumSequenceNumber", json.int(params.minimum_sequence_number)),
+    #("clientSequenceNumber", json.int(params.client_sequence_number)),
+    #("referenceSequenceNumber", json.int(params.reference_sequence_number)),
+    #("type", json.string(params.op_type)),
     #("contents", params.contents),
     #("metadata", params.metadata),
-    #("timestamp", coerce(params.timestamp)),
-  ]
+    #("timestamp", json.int(params.timestamp)),
+  ])
 }
 
-/// Build a summary ack as a list of key-value pairs.
+/// Build a summary ack JSON object. `sn` is the proposal's sequence number;
+/// the ack uses `sn + 1`. Reserve that number in the sequencer separately.
 pub fn build_summary_ack(
   handle: String,
   sn: Int,
   msn: Int,
   timestamp: Int,
-) -> List(#(String, Dynamic)) {
-  let summary_proposal =
-    dict.from_list([#("summarySequenceNumber", coerce(sn))])
+) -> Json {
+  let summary_proposal = json.object([#("summarySequenceNumber", json.int(sn))])
 
   let contents =
-    dict.from_list([
-      #("handle", coerce(handle)),
-      #("summaryProposal", coerce(summary_proposal)),
+    json.object([
+      #("handle", json.string(handle)),
+      #("summaryProposal", summary_proposal),
     ])
 
-  [
-    #("clientId", coerce(Nil)),
-    #("sequenceNumber", coerce(sn + 1)),
-    #("minimumSequenceNumber", coerce(msn)),
-    #("clientSequenceNumber", coerce(-1)),
-    #("referenceSequenceNumber", coerce(sn)),
-    #("type", coerce("summaryAck")),
-    #("contents", coerce(contents)),
-    #("metadata", coerce(Nil)),
-    #("timestamp", coerce(timestamp)),
-  ]
+  json.object([
+    #("clientId", json.null()),
+    #("sequenceNumber", json.int(sn + 1)),
+    #("minimumSequenceNumber", json.int(msn)),
+    #("clientSequenceNumber", json.int(-1)),
+    #("referenceSequenceNumber", json.int(sn)),
+    #("type", json.string("summaryAck")),
+    #("contents", contents),
+    #("metadata", json.null()),
+    #("timestamp", json.int(timestamp)),
+  ])
 }
-
-/// Unsafe coerce a value to Dynamic - only used for BEAM interop
-/// where we need to build mixed-type maps
-@external(erlang, "gleam_stdlib", "identity")
-fn coerce(value: a) -> Dynamic

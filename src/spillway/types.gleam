@@ -1,6 +1,6 @@
 /// Core types for Fluid Framework protocol
 /// These types map directly to the protocol specification
-import gleam/dynamic.{type Dynamic}
+import gleam/dynamic/decode.{type Decoder}
 import gleam/option.{type Option}
 import signet/types as token
 
@@ -72,21 +72,21 @@ pub type Trace {
 }
 
 /// Document message (client -> server)
-pub type DocumentMessage {
+pub type DocumentMessage(payload) {
   DocumentMessage(
     client_sequence_number: Int,
     reference_sequence_number: Int,
     message_type: String,
-    contents: Dynamic,
-    metadata: Option(Dynamic),
-    server_metadata: Option(Dynamic),
+    contents: payload,
+    metadata: Option(payload),
+    server_metadata: Option(payload),
     traces: Option(List(Trace)),
     compression: Option(String),
   )
 }
 
 /// Sequenced document message (server -> clients)
-pub type SequencedDocumentMessage {
+pub type SequencedDocumentMessage(payload) {
   SequencedDocumentMessage(
     /// Client ID (null for system messages)
     client_id: Option(String),
@@ -101,11 +101,11 @@ pub type SequencedDocumentMessage {
     /// Message type
     message_type: String,
     /// Message contents
-    contents: Dynamic,
+    contents: payload,
     /// Application metadata
-    metadata: Option(Dynamic),
+    metadata: Option(payload),
     /// Server metadata
-    server_metadata: Option(Dynamic),
+    server_metadata: Option(payload),
     /// Branch origin (if applicable)
     origin: Option(MessageOrigin),
     /// Latency traces
@@ -138,4 +138,13 @@ pub fn scope_to_string(scope: Scope) -> String {
 /// Parse scope from string
 pub fn scope_from_string(value: String) -> Result(Scope, Nil) {
   token.scope_from_string(value)
+}
+
+/// Decode a known Fluid scope at the wire boundary.
+pub fn scope_decoder() -> Decoder(Scope) {
+  use value <- decode.then(decode.string)
+  case scope_from_string(value) {
+    Ok(scope) -> decode.success(scope)
+    Error(_) -> decode.failure(token.DocRead, expected: "Fluid scope")
+  }
 }

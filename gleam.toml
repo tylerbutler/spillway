@@ -3,14 +3,13 @@ version = "0.1.0"
 description = "Type-safe Fluid Framework protocol logic (sequencing, sessions, signals)"
 licences = ["MIT"]
 repository = { type = "github", user = "tylerbutler", repo = "spillway" }
-gleam = ">= 1.7.0"
-target = "erlang"
+gleam = ">= 1.14.0"
 
 [dependencies]
-gleam_stdlib = ">= 0.62.0 and < 2.0.0"
+gleam_stdlib = ">= 0.71.0 and < 2.0.0"
 gleam_json = ">= 3.0.0 and < 4.0.0"
-signet = { git = "https://github.com/tylerbutler/signet", ref = "main" }
-windsock = { git = "https://github.com/tylerbutler/windsock", ref = "main" }
+signet = { git = "https://github.com/tylerbutler/signet", ref = "367643f8e95c0756dbb3605cfbec44f1090f25bc" }
+windsock = { git = "https://github.com/tylerbutler/windsock", ref = "a0745584f6291ac00e7f59dbd47ad90b25774bd6" }
 
 [dev-dependencies]
 startest = ">= 0.8.0 and < 1.0.0"

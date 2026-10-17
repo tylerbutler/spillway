@@ -1,12 +1,13 @@
 import gleam/dict
-import gleam/dynamic
+import gleam/dynamic/decode
+import gleam/json
 import gleam/option
 import gleam/string
-import spillway
 import spillway/nack
 import spillway/sequencing
 import spillway/session_logic
 import spillway/signals
+import spillway/summary
 import startest
 import startest/expect
 
@@ -19,92 +20,92 @@ pub fn main() -> Nil {
 // ─────────────────────────────────────────────────────────────────────────────
 
 pub fn new_sequence_state_starts_at_zero_test() {
-  let state = spillway.new_sequence_state()
-  spillway.current_sn(state) |> expect.to_equal(0)
-  spillway.current_msn(state) |> expect.to_equal(0)
-  spillway.client_count(state) |> expect.to_equal(0)
+  let state = sequencing.new()
+  sequencing.current_sn(state) |> expect.to_equal(0)
+  sequencing.current_msn(state) |> expect.to_equal(0)
+  sequencing.client_count(state) |> expect.to_equal(0)
 }
 
 pub fn client_join_test() {
-  let state = spillway.new_sequence_state()
-  let state = spillway.client_join(state, "client-1", 0)
+  let state = sequencing.new()
+  let state = sequencing.client_join(state, "client-1", 0)
 
-  spillway.client_count(state) |> expect.to_equal(1)
-  spillway.is_client_connected(state, "client-1") |> expect.to_be_true()
-  spillway.is_client_connected(state, "client-2") |> expect.to_be_false()
+  sequencing.client_count(state) |> expect.to_equal(1)
+  sequencing.is_client_connected(state, "client-1") |> expect.to_be_true()
+  sequencing.is_client_connected(state, "client-2") |> expect.to_be_false()
 }
 
 pub fn assign_sequence_number_test() {
-  let state = spillway.new_sequence_state()
-  let state = spillway.client_join(state, "client-1", 0)
+  let state = sequencing.new()
+  let state = sequencing.client_join(state, "client-1", 0)
 
-  let assert sequencing.SequenceOk(new_state, assigned_sn, msn) =
+  let assert Ok(sequencing.SequenceAssignment(new_state, assigned_sn, msn)) =
     sequencing.assign_sequence_number(state, "client-1", 1, 0)
 
   assigned_sn |> expect.to_equal(1)
   msn |> expect.to_equal(0)
-  spillway.current_sn(new_state) |> expect.to_equal(1)
+  sequencing.current_sn(new_state) |> expect.to_equal(1)
 }
 
 pub fn multiple_ops_increment_sn_test() {
-  let state = spillway.new_sequence_state()
-  let state = spillway.client_join(state, "client-1", 0)
+  let state = sequencing.new()
+  let state = sequencing.client_join(state, "client-1", 0)
 
-  let assert sequencing.SequenceOk(state, sn, _) =
+  let assert Ok(sequencing.SequenceAssignment(state, sn, _)) =
     sequencing.assign_sequence_number(state, "client-1", 1, 0)
   sn |> expect.to_equal(1)
 
-  let assert sequencing.SequenceOk(state, sn, _) =
+  let assert Ok(sequencing.SequenceAssignment(state, sn, _)) =
     sequencing.assign_sequence_number(state, "client-1", 2, 1)
   sn |> expect.to_equal(2)
 
-  spillway.current_sn(state) |> expect.to_equal(2)
+  sequencing.current_sn(state) |> expect.to_equal(2)
 }
 
 pub fn invalid_csn_rejected_test() {
-  let state = spillway.new_sequence_state()
-  let state = spillway.client_join(state, "client-1", 0)
+  let state = sequencing.new()
+  let state = sequencing.client_join(state, "client-1", 0)
 
-  let assert sequencing.SequenceOk(state, _, _) =
+  let assert Ok(sequencing.SequenceAssignment(state, _, _)) =
     sequencing.assign_sequence_number(state, "client-1", 1, 0)
 
   case sequencing.assign_sequence_number(state, "client-1", 1, 1) {
-    sequencing.SequenceError(sequencing.InvalidCsn(_, _)) -> Nil
+    Error(sequencing.InvalidCsn(_, _)) -> Nil
     other ->
       panic as { "Expected InvalidCsn error, got: " <> string.inspect(other) }
   }
 }
 
 pub fn client_leave_test() {
-  let state = spillway.new_sequence_state()
-  let state = spillway.client_join(state, "client-1", 0)
-  let state = spillway.client_join(state, "client-2", 0)
+  let state = sequencing.new()
+  let state = sequencing.client_join(state, "client-1", 0)
+  let state = sequencing.client_join(state, "client-2", 0)
 
-  spillway.client_count(state) |> expect.to_equal(2)
+  sequencing.client_count(state) |> expect.to_equal(2)
 
-  let state = spillway.client_leave(state, "client-1")
+  let state = sequencing.client_leave(state, "client-1")
 
-  spillway.client_count(state) |> expect.to_equal(1)
-  spillway.is_client_connected(state, "client-1") |> expect.to_be_false()
-  spillway.is_client_connected(state, "client-2") |> expect.to_be_true()
+  sequencing.client_count(state) |> expect.to_equal(1)
+  sequencing.is_client_connected(state, "client-1") |> expect.to_be_false()
+  sequencing.is_client_connected(state, "client-2") |> expect.to_be_true()
 }
 
 pub fn msn_tracks_minimum_rsn_across_clients_test() {
-  let state = spillway.new_sequence_state()
+  let state = sequencing.new()
 
-  let state = spillway.client_join(state, "client-1", 0)
+  let state = sequencing.client_join(state, "client-1", 0)
 
-  let assert sequencing.SequenceOk(state, _, msn) =
+  let assert Ok(sequencing.SequenceAssignment(state, _, msn)) =
     sequencing.assign_sequence_number(state, "client-1", 1, 0)
   msn |> expect.to_equal(0)
 
-  let state = spillway.client_join(state, "client-2", 1)
+  let state = sequencing.client_join(state, "client-2", 1)
 
-  let assert sequencing.SequenceOk(state, _, msn) =
+  let assert Ok(sequencing.SequenceAssignment(state, _, msn)) =
     sequencing.assign_sequence_number(state, "client-2", 1, 1)
   msn |> expect.to_equal(0)
 
-  let assert sequencing.SequenceOk(_, _, msn) =
+  let assert Ok(sequencing.SequenceAssignment(_, _, msn)) =
     sequencing.assign_sequence_number(state, "client-1", 2, 2)
   msn |> expect.to_equal(1)
 }
@@ -164,28 +165,19 @@ pub fn negotiate_version_empty_client_test() {
 // -- Validate Summarize Contents --
 
 pub fn validate_summarize_contents_all_present_test() {
-  let contents =
-    dict.from_list([
-      #("handle", coerce("h1")),
-      #("message", coerce("msg")),
-      #("parents", coerce([])),
-      #("head", coerce("sha")),
-    ])
-
-  session_logic.validate_summarize_contents(contents)
-  |> expect.to_be_ok()
+  let _ =
+    json.parse(
+      "{\"handle\":\"h1\",\"message\":\"msg\",\"parents\":[],\"head\":\"sha\"}",
+      summary.summarize_contents_decoder(),
+    )
+    |> expect.to_be_ok()
+  Nil
 }
 
 pub fn validate_summarize_contents_missing_fields_test() {
-  let contents = dict.from_list([#("handle", coerce("h1"))])
-
-  case session_logic.validate_summarize_contents(contents) {
-    Error(msg) -> {
-      string.contains(msg, "message") |> expect.to_be_true()
-      string.contains(msg, "parents") |> expect.to_be_true()
-      string.contains(msg, "head") |> expect.to_be_true()
-    }
-    Ok(_) -> panic as "Expected Error, got Ok"
+  case json.parse("{\"handle\":\"h1\"}", summary.summarize_contents_decoder()) {
+    Error(json.UnableToDecode([_, _, _])) -> Nil
+    _ -> panic as "Expected errors for message, parents, and head"
   }
 }
 
@@ -323,88 +315,57 @@ pub fn nack_error_type_roundtrip_test() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 pub fn normalize_v2_signal_test() {
-  let raw =
-    dict.from_list([
-      #("content", coerce("hello")),
-      #("type", coerce("myType")),
-      #("clientConnectionNumber", coerce(42)),
-    ])
-
-  let result = signals.normalize_signal(raw)
+  let assert Ok(result) =
+    json.parse(
+      "{\"content\":\"hello\",\"type\":\"myType\",\"clientConnectionNumber\":42}",
+      signals.decoder(decode.string),
+    )
   result.signal_type |> expect.to_equal(option.Some("myType"))
   result.client_connection_number |> expect.to_equal(option.Some(42))
   result.target_client_id |> expect.to_equal(option.None)
 }
 
 pub fn normalize_v1_signal_test() {
-  let raw =
-    dict.from_list([
-      #("address", coerce("")),
-      #(
-        "contents",
-        coerce(
-          dict.from_list([
-            #("type", coerce("v1Type")),
-            #("content", coerce("data")),
-          ]),
-        ),
-      ),
-      #("clientBroadcastSignalSequenceNumber", coerce(7)),
-    ])
-
-  let result = signals.normalize_signal(raw)
+  let assert Ok(result) =
+    json.parse(
+      "{\"address\":\"\",\"contents\":{\"type\":\"v1Type\",\"content\":\"data\"},\"clientBroadcastSignalSequenceNumber\":7}",
+      signals.decoder(decode.string),
+    )
   result.signal_type |> expect.to_equal(option.Some("v1Type"))
   result.client_connection_number |> expect.to_equal(option.Some(7))
   result.targeted_clients |> expect.to_equal(option.None)
 }
 
 pub fn normalize_v2_envelope_signal_test() {
-  let inner =
-    dict.from_list([
-      #("content", coerce("payload")),
-      #("type", coerce("sigType")),
-    ])
-
-  let raw =
-    dict.from_list([
-      #("signal", coerce(inner)),
-      #("targetedClients", coerce(["a", "b"])),
-    ])
-
-  let result = signals.normalize_signal(raw)
+  let assert Ok(result) =
+    json.parse(
+      "{\"signal\":{\"content\":\"payload\",\"type\":\"sigType\"},\"targetedClients\":[\"a\",\"b\"]}",
+      signals.decoder(decode.string),
+    )
   result.signal_type |> expect.to_equal(option.Some("sigType"))
   result.targeted_clients |> expect.to_equal(option.Some(["a", "b"]))
 }
 
-pub fn normalized_to_map_carries_type_and_targeting_test() {
-  let raw =
-    dict.from_list([
-      #("content", coerce("payload")),
-      #("type", coerce("cursor")),
-      #("targetedClients", coerce(["c2"])),
-    ])
-
-  let map = signals.normalized_to_map(signals.normalize_signal(raw))
-  dict.get(map, "type") |> expect.to_equal(Ok(coerce("cursor")))
-  dict.get(map, "targetedClients") |> expect.to_equal(Ok(coerce(["c2"])))
+pub fn normalized_to_json_carries_type_and_targeting_test() {
+  let assert Ok(signal) =
+    json.parse(
+      "{\"content\":\"payload\",\"type\":\"cursor\",\"targetedClients\":[\"c2\"]}",
+      signals.decoder(decode.string),
+    )
+  let output = signals.normalized_to_json(signal, json.string) |> json.to_string
+  json.parse(output, decode.at(["type"], decode.string))
+  |> expect.to_equal(Ok("cursor"))
+  json.parse(output, decode.at(["targetedClients"], decode.list(decode.string)))
+  |> expect.to_equal(Ok(["c2"]))
 }
 
 pub fn build_summary_ack_shape_test() {
-  let fields = session_logic.build_summary_ack("handle-1", 10, 5, 1000)
-  get_field(fields, "sequenceNumber") |> expect.to_equal(Ok(coerce(11)))
-  get_field(fields, "referenceSequenceNumber")
-  |> expect.to_equal(Ok(coerce(10)))
-  get_field(fields, "type") |> expect.to_equal(Ok(coerce("summaryAck")))
+  let output =
+    session_logic.build_summary_ack("handle-1", 10, 5, 1000) |> json.to_string
+  json.parse(output, decode.at(["sequenceNumber"], decode.int))
+  |> expect.to_equal(Ok(11))
+  json.parse(output, decode.at(["referenceSequenceNumber"], decode.int))
+  |> expect.to_equal(Ok(10))
+  json.parse(output, decode.at(["type"], decode.string))
+  |> expect.to_equal(Ok("summaryAck"))
 }
-
-fn get_field(fields: List(#(String, a)), key: String) -> Result(a, Nil) {
-  case fields {
-    [] -> Error(Nil)
-    [#(k, v), ..] if k == key -> Ok(v)
-    [_, ..rest] -> get_field(rest, key)
-  }
-}
-
-// Helper for tests - coerce a value to Dynamic
-@external(erlang, "gleam_stdlib", "identity")
-fn coerce(value: a) -> dynamic.Dynamic

@@ -31,9 +31,9 @@ pub type SequenceState {
   )
 }
 
-/// Result of assigning a sequence number
-pub type SequenceResult {
-  SequenceOk(
+/// Successful assignment of a sequence number.
+pub type SequenceAssignment {
+  SequenceAssignment(
     /// New state after assignment
     state: SequenceState,
     /// Assigned sequence number
@@ -41,7 +41,6 @@ pub type SequenceResult {
     /// Updated MSN
     msn: Int,
   )
-  SequenceError(reason: SequenceError)
 }
 
 /// Errors that can occur during sequencing
@@ -121,16 +120,16 @@ pub fn assign_sequence_number(
   client_id: String,
   csn: Int,
   rsn: Int,
-) -> SequenceResult {
+) -> Result(SequenceAssignment, SequenceError) {
   // Look up client state
   case dict.get(state.client_states, client_id) {
-    Error(Nil) -> SequenceError(UnknownClient(client_id))
+    Error(Nil) -> Error(UnknownClient(client_id))
 
     Ok(client_state) -> {
       // Validate CSN is increasing
       case csn > client_state.last_csn {
         False ->
-          SequenceError(InvalidCsn(
+          Error(InvalidCsn(
             expected_greater_than: client_state.last_csn,
             received: csn,
           ))
@@ -139,7 +138,7 @@ pub fn assign_sequence_number(
           // Validate RSN is not from the future
           case rsn > state.sequence_number {
             True ->
-              SequenceError(InvalidRsn(
+              Error(InvalidRsn(
                 current_sn: state.sequence_number,
                 received_rsn: rsn,
               ))
@@ -166,7 +165,11 @@ pub fn assign_sequence_number(
                   client_states: new_clients,
                 )
 
-              SequenceOk(state: new_state, assigned_sn: new_sn, msn: new_msn)
+              Ok(SequenceAssignment(
+                state: new_state,
+                assigned_sn: new_sn,
+                msn: new_msn,
+              ))
             }
           }
         }

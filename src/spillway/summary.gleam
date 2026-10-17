@@ -3,6 +3,7 @@
 /// Summaries capture point-in-time snapshots of document state for efficient loading.
 /// The summary tree structure allows for hierarchical representation of document state.
 import gleam/dict.{type Dict}
+import gleam/dynamic/decode.{type Decoder}
 import gleam/option.{type Option}
 
 /// Summary tree node types
@@ -58,6 +59,25 @@ pub type SummarizeContents {
     /// Additional details
     includes_protocol_tree: Option(Bool),
   )
+}
+
+pub fn summarize_contents_decoder() -> Decoder(SummarizeContents) {
+  use handle <- decode.field("handle", decode.string)
+  use message <- decode.field("message", decode.string)
+  use parents <- decode.field("parents", decode.list(decode.string))
+  use head <- decode.field("head", decode.string)
+  use includes_protocol_tree <- decode.optional_field(
+    "includesProtocolTree",
+    option.None,
+    decode.optional(decode.bool),
+  )
+  decode.success(SummarizeContents(
+    handle:,
+    message:,
+    parents:,
+    head:,
+    includes_protocol_tree:,
+  ))
 }
 
 /// Summary acknowledgment - sent when summary is accepted

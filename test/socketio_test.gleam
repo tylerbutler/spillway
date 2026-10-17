@@ -1,8 +1,11 @@
-import gleam/dict
 import gleam/dynamic
+import gleam/dynamic/decode
 import gleam/json
+import gleam/option.{None, Some}
+import signet/types as token
 import spillway/connect_document
 import spillway/socketio
+import spillway/types
 import startest/expect
 import windsock
 
@@ -56,57 +59,58 @@ pub fn encode_op_shape_test() {
     socketio.encode_op(json.string("doc-1"), json.preprocessed_array([]))
   case socketio.classify(frame) {
     socketio.FluidEvent("op", [decoded_doc_id, decoded_messages]) -> {
-      decoded_doc_id |> expect.to_equal(dynamic.string("doc-1"))
-      decoded_messages |> expect.to_equal(dynamic.list([]))
+      decode.run(decoded_doc_id, decode.string) |> expect.to_equal(Ok("doc-1"))
+      decode.run(decoded_messages, decode.list(decode.string))
+      |> expect.to_equal(Ok([]))
     }
     _ -> panic as "expected FluidEvent(op, [documentId, messages])"
   }
 }
 
 pub fn connect_document_parse_request_ok_test() {
-  let payload =
-    dict.from_list([
-      #("tenantId", dynamic.string("tenant-a")),
-      #("id", dynamic.string("doc-a")),
-      #("token", dynamic.string("token-a")),
-    ])
-
+  let assert Ok(payload) =
+    json.parse(
+      "{\"tenantId\":\"tenant-a\",\"id\":\"doc-a\",\"token\":\"token-a\"}",
+      decode.dynamic,
+    )
   connect_document.parse_request(payload)
   |> expect.to_equal(
-    Ok(connect_document.ConnectRequest("tenant-a", "doc-a", "token-a")),
+    Ok(connect_document.ConnectRequest("tenant-a", "doc-a", "token-a", None)),
   )
 }
 
 pub fn connect_document_parse_request_missing_field_test() {
-  let payload =
-    dict.from_list([
-      #("tenantId", dynamic.string("tenant-a")),
-      #("token", dynamic.string("token-a")),
-    ])
-
-  connect_document.parse_request(payload)
-  |> expect.to_equal(Error(connect_document.MissingField("id")))
+  let assert Ok(payload) =
+    json.parse(
+      "{\"tenantId\":\"tenant-a\",\"token\":\"token-a\"}",
+      decode.dynamic,
+    )
+  case connect_document.parse_request(payload) {
+    Error(connect_document.InvalidPayload([decode.DecodeError(path: ["id"], ..)])) ->
+      Nil
+    _ -> panic as "expected a missing id error"
+  }
 }
 
 pub fn connect_document_validate_mode_scope_write_with_scope_test() {
-  let payload = dict.from_list([#("mode", dynamic.string("write"))])
-  connect_document.validate_mode_scope(payload, ["doc:read", "doc:write"])
+  connect_document.validate_mode_scope(Some(types.WriteMode), [
+    token.DocRead,
+    token.DocWrite,
+  ])
   |> expect.to_equal(Ok(Nil))
 }
 
 pub fn connect_document_validate_mode_scope_write_without_scope_test() {
-  let payload = dict.from_list([#("mode", dynamic.string("write"))])
-  connect_document.validate_mode_scope(payload, ["doc:read"])
+  connect_document.validate_mode_scope(Some(types.WriteMode), [token.DocRead])
   |> expect.to_equal(Error(connect_document.WriteModeWithoutWriteScope))
 }
 
 pub fn connect_document_validate_mode_scope_absent_mode_test() {
-  let payload = dict.new()
-  connect_document.validate_mode_scope(payload, [])
+  connect_document.validate_mode_scope(None, [])
   |> expect.to_equal(Ok(Nil))
 }
 
-pub fn connect_document_read_write_scope_strings_test() {
-  connect_document.read_scope() |> expect.to_equal("doc:read")
-  connect_document.write_scope() |> expect.to_equal("doc:write")
+pub fn connect_document_invalid_payload_test() {
+  let _ = connect_document.parse_request(dynamic.int(1)) |> expect.to_be_error()
+  Nil
 }

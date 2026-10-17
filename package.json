@@ -6,10 +6,12 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "site:dev": "astro dev"
+    "site:dev": "astro dev",
+    "test:browser": "gleam build --target javascript && node scripts/browser-test.mjs"
   },
   "devDependencies": {
     "astro": "^7.1.0",
-    "astro-expressive-code": "^0.44.0"
+    "astro-expressive-code": "^0.44.0",
+    "playwright": "^1.58.2"
   }
 }
